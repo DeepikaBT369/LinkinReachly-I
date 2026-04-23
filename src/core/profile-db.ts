@@ -169,6 +169,7 @@ export function calculateRecencyWeight(
     + (referenceDate.getMonth() - end.getMonth())
 
   if (monthsAgo <= 0) return 1.0
+  const weight = Math.exp(-0.693 * monthsAgo / 36)
   return Math.exp(-0.693 * monthsAgo / 36)
 }
 

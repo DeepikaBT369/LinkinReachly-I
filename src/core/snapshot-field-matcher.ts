@@ -233,16 +233,33 @@ const TEXT_FIELD_PATTERNS: FieldPatternEntry[] = [
   { pattern: /\bat\s+least\s+18\b|\bover\s+18\b|\b18\s+years\s+of\s+age\b/i, profileKey: 'over18' },
 
   // --- Salary / compensation ---
-  { pattern: /\b(?:desired|expected|current|minimum|salary)\s*(?:salary|compensation|pay|wage|range)?\b|\b(?:compensation|pay)\s*(?:expectation|requirement|range)?\b|\b(?:salary)\b/i, profileKey: 'salaryMin',
+  // { pattern: /\b(?:desired|expected|current|minimum|salary)\s*(?:salary|compensation|pay|wage|range)?\b|\b(?:compensation|pay)\s*(?:expectation|requirement|range)?\b|\b(?:salary)\b/i, profileKey: 'salaryMin',
+  //   transformer: (p) => {
+  //     if (p.salaryMin != null) {
+  //       const currency = p.salaryCurrency || 'USD'
+  //       return p.salaryMax != null && p.salaryMax !== p.salaryMin
+  //         ? `${currency} ${p.salaryMin.toLocaleString()} - ${p.salaryMax.toLocaleString()}`
+  //         : `${p.salaryMin.toLocaleString()}`
+  //     }
+  //     return null
+  //   }},
+  // --- Salary / compensation ---
+  {
+    pattern: /\b(?:desired|expected|current|minimum|salary)\s*(?:salary|compensation|pay|wage|range)?\b|\b(?:compensation|pay)\s*(?:expectation|requirement|range)?\b|\b(?:salary)\b/i,
+    profileKey: 'salaryMin',
     transformer: (p) => {
-      if (p.salaryMin != null) {
-        const currency = p.salaryCurrency || 'USD'
-        return p.salaryMax != null && p.salaryMax !== p.salaryMin
-          ? `${currency} ${p.salaryMin.toLocaleString()} - ${p.salaryMax.toLocaleString()}`
-          : `${p.salaryMin.toLocaleString()}`
-      }
-      return null
-    }},
+      if (p.salaryMin == null) return null
+
+      const format = (n: number) => n.toLocaleString('en-US')
+
+      const min = format(p.salaryMin)
+      const max = p.salaryMax != null ? format(p.salaryMax) : null
+
+      return p.salaryMax != null && p.salaryMax !== p.salaryMin
+        ? `${min} - ${max}`
+        : min
+    }
+  },
 
   // --- Education ---
   { pattern: /\b(?:education|degree|highest\s+(?:level\s+of\s+)?education|academic|qualification)\b/i,

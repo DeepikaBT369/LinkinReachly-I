@@ -5,12 +5,12 @@
 // ---------------------------------------------------------------------------
 
 import type {
-  UserProfile,
+  JobFitReport,
   ProfileEntry,
   RequirementMatch,
-  JobFitReport
+  UserProfile
 } from './profile-db'
-import { calculateRecencyWeight, recommendationFromScore } from './profile-db'
+import { recommendationFromScore } from './profile-db'
 
 // ── Public types ──────────────────────────────────────────────────────────
 
@@ -173,19 +173,26 @@ function scoreSkillMatch(profile: UserProfile, job: JobPosting): { score: number
   let totalWeight = 0
   for (const entry of profile.entries) {
     const entrySkillsLower = (entry.skills || []).map(s => s.toLowerCase())
+    totalWeight += entry.recencyWeight
     const entryMatched = entrySkillsLower.filter(s => {
       const skillTokens = tokenize(s)
       return skillTokens.some(t => jobTokens.includes(t))
     })
     if (entryMatched.length > 0) {
       weightedMatches += (entryMatched.length / Math.max(1, entrySkillsLower.length)) * entry.recencyWeight
-      totalWeight += entry.recencyWeight
     }
   }
 
-  const baseRatio = allProfileSkills.size > 0
-    ? matched.length / Math.max(matched.length + missing.length, 1)
-    : 0
+  const totalRequirements = allJobRequirements.length
+  let baseRatio: number
+  if (totalRequirements > 0) {
+    const matchedReqCount = totalRequirements - missing.length
+    baseRatio = matchedReqCount / totalRequirements
+  } else if (allProfileSkills.size > 0) {
+    baseRatio = Math.min(1, (matched.length / Math.max(1, allProfileSkills.size)) * 1.5)
+  } else {
+    baseRatio = 0
+  }
   const recencyBonus = totalWeight > 0 ? weightedMatches / totalWeight : 0
   const score = Math.round(Math.min(100, (baseRatio * 60 + recencyBonus * 40)))
 

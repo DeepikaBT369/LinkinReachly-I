@@ -5,9 +5,9 @@
 // Falls back gracefully when backend is not configured (local-only mode).
 // ---------------------------------------------------------------------------
 
-import { getAuthHeaders, isAuthenticated, getFirebaseToken, updatePlanState } from './auth-service'
-import { getServiceConfig, isBackendConfigured } from './service-config'
-import { appLog } from './app-log'
+import { appLog } from './app-log';
+import { getAuthHeaders, getFirebaseToken, isAuthenticated, updatePlanState } from './auth-service';
+import { getServiceConfig, isBackendConfigured } from './service-config';
 type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string }
 
 async function cloudFunctionCall<T>(
@@ -223,7 +223,7 @@ export async function trackOnboardingServer(
   step: string,
   meta?: Record<string, unknown>,
 ): Promise<void> {
-  await cloudFunctionCall('/trackOnboarding', 'POST', { step, meta, timestamp: new Date().toISOString() }, { requireAuth: false }).catch(() => {})
+  await cloudFunctionCall('/trackOnboarding', 'POST', { step, meta, timestamp: new Date().toISOString() }, { requireAuth: true }).catch(() => {})
 }
 
 /**

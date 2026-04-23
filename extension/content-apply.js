@@ -1158,7 +1158,6 @@ var clickEasyApply = async function() {
   }
   {
     const el = foundEl
-    if (el.disabled) return { ok: false, detail: 'easy_apply_button_disabled' }
     el.scrollIntoView({ block: 'center' })
     const sduiApplyUrl = (el.tagName === 'A' && el.href && el.href.includes('openSDUIApplyFlow'))
         ? el.href : undefined
@@ -1391,7 +1390,6 @@ var clickEasyApply = async function() {
       }
     }
   }
-}
 
 /**
  * Locate the Easy Apply button and return its center coordinates + metadata
@@ -2826,5 +2824,4 @@ var autoFillFromMemory = async function() {
     })
   })
 }
-
 }

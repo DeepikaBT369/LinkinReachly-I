@@ -60,13 +60,17 @@ const STOP = new Set([
   'do'
 ])
 
+const TECH_SHORTLIST = new Set(['go', 'r', 'c', 'c#', 'c++', 'ui', 'qa', 'ml', 'ai'])
+
 function tokenize(text: string): string[] {
   return String(text || '')
     .toLowerCase()
+    .replace(/c\+\+/g, 'cpp')   // preserve C++ before stripping punctuation
+    .replace(/c#/g, 'csharp')   // preserve C# before stripping punctuation
     .replace(/[^a-z0-9+#.\s-]/gi, ' ')
     .split(/\s+/)
     .map((t) => t.replace(/^\.+|\.+$/g, ''))
-    .filter((t) => t.length > 2 && !STOP.has(t))
+    .filter((t) => (t.length > 2 || TECH_SHORTLIST.has(t)) && !STOP.has(t))
 }
 
 /** Jaccard similarity on token sets, scaled 0–100. */

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
-import vm from 'node:vm'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import vm from 'node:vm'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 type JobListingsResult = {

@@ -3,12 +3,12 @@
 // form field matching via accessibility snapshots.
 // ---------------------------------------------------------------------------
 
-import { classifyApplicationQuestionIntent } from '@core/easy-apply-factual-helpers'
 import type { ApplicantBridgeSnapshot } from '@core/applicant-bridge-snapshot'
-import type { AppSettings } from './settings'
-import { getApiKey } from './settings'
+import { classifyApplicationQuestionIntent } from '@core/easy-apply-factual-helpers'
 import { appLog } from './app-log'
 import { callLlm, classifyLlmError, extractErrorDetail } from './llm-core'
+import type { AppSettings } from './settings'
+import { getApiKey } from './settings'
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -80,22 +80,48 @@ function buildProfileKeyList(profile: ApplicantBridgeSnapshot): string {
   return lines.join('\n')
 }
 
+// function resolveProfileValue(
+//   key: string,
+//   profile: ApplicantBridgeSnapshot
+// ): string | null {
+//   if (key === 'salaryExpectation') {
+//     if (profile.salaryMin == null) return null
+//     const currency = profile.salaryCurrency || 'USD'
+//     return profile.salaryMax != null && profile.salaryMax !== profile.salaryMin
+//       ? `${currency} ${profile.salaryMin.toLocaleString()} - ${profile.salaryMax.toLocaleString()}`
+//       : `${profile.salaryMin.toLocaleString()}`
+//   }
+//   const v = (profile as Record<string, unknown>)[key]
+//   if (v == null) return null
+//   const s = String(v).trim()
+//   return s || null
+// }
+
 function resolveProfileValue(
   key: string,
   profile: ApplicantBridgeSnapshot
 ): string | null {
   if (key === 'salaryExpectation') {
     if (profile.salaryMin == null) return null
-    const currency = profile.salaryCurrency || 'USD'
+
+    const format = (n: number) => n.toLocaleString('en-US')
+
+    const min = format(profile.salaryMin)
+    const max = profile.salaryMax != null ? format(profile.salaryMax) : null
+
     return profile.salaryMax != null && profile.salaryMax !== profile.salaryMin
-      ? `${currency} ${profile.salaryMin.toLocaleString()} - ${profile.salaryMax.toLocaleString()}`
-      : `${profile.salaryMin.toLocaleString()}`
+      ? `${min} - ${max}`
+      : min
   }
+
   const v = (profile as Record<string, unknown>)[key]
   if (v == null) return null
+
   const s = String(v).trim()
   return s || null
 }
+
+
 
 export { resolveProfileValue as resolveProfileValueForKey }
 
@@ -126,7 +152,9 @@ Rules: 2-5 sentences max. No markdown, bullets, or quotation marks around the wh
     intent: 'behavioral',
     applicant: {
       fullName: profile.fullName,
-      yearsOfExperience: profile.yearsOfExperience,
+      yearsOfExperience: profile.yearsOfExperience
+        ? String(parseInt(String(profile.yearsOfExperience), 10) || profile.yearsOfExperience)
+        : undefined,
       educationSummary: profile.educationSummary,
       linkedInUrl: profile.linkedInUrl,
       githubUrl: profile.githubUrl,

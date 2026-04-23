@@ -41,19 +41,27 @@ export default defineConfig(({ mode }) => {
     }
   },
   renderer: {
-    root: resolve(__dirname, 'src/renderer'),
-    build: {
-      rollupOptions: {
-        input: resolve(__dirname, 'src/renderer/index.html')
-      }
-    },
-    resolve: {
-      alias: {
-        '@': resolve(__dirname, 'src/renderer/src'),
-        '@core': resolve(__dirname, 'src/core')
-      }
-    },
-    plugins: [react()]
-  }
+  root: resolve(__dirname, 'src/renderer'),
+
+  server: {
+    port: 5173,
+    strictPort: true
+  },
+
+  build: {
+    rollupOptions: {
+      input: resolve(__dirname, 'src/renderer/index.html')
+    }
+  },
+
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src/renderer/src'),
+      '@core': resolve(__dirname, 'src/core')
+    }
+  },
+
+  plugins: [react()]
+}
 }
 })

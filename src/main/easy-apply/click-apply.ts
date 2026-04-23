@@ -4,13 +4,13 @@
  * including SDUI <a> tag handling.
  */
 
-import { getActiveLinkedInTabId, sendCommand } from '../bridge'
-import { applyTrace } from '../apply-trace'
 import { appLog } from '../app-log'
+import { applyTrace } from '../apply-trace'
+import { getActiveLinkedInTabId, sendCommand } from '../bridge'
+import type { EasyApplyResult } from './shared'
 import {
   easyApplyBridgeCommand
 } from './shared'
-import type { EasyApplyResult } from './shared'
 
 // ────────────────────────────────────────────────────────────────────────────
 // Bezier mouse path generation for CDP (Chrome DevTools Protocol) clicks.
@@ -326,6 +326,7 @@ async function attemptCdpClick(
 
 async function checkFormAlreadyOpen(): Promise<{ formOpen: boolean; fieldCount: number; failDetail?: string }> {
   const modalCheck = await easyApplyBridgeCommand('EXTRACT_FORM_FIELDS', {}, 'click_apply', 'modal_already_open_check')
+  if (!modalCheck) return { formOpen: false, fieldCount: 0, failDetail: 'modal_check_failed' }
   const modalCheckData = (modalCheck as { data?: unknown }).data
   const modalFields = Array.isArray(modalCheckData) ? modalCheckData as Array<Record<string, unknown>> : []
   const realFields = modalFields.filter(f => {
@@ -595,12 +596,29 @@ export async function easyApplyClickApplyButton(
       }
     }
 
+    // Fallback: if no tab ID, try to get sduiApplyUrl from content script
+      if (tabId == null && !locatedSduiApplyUrl) {
+        try {
+          const located = await easyApplyBridgeCommand('LOCATE_EASY_APPLY_BUTTON', {}, 'click_apply', 'locate_fallback')
+          if (located?.ok) {
+            const locData = (located as { data?: unknown }).data as Record<string, unknown> | undefined
+            if (locData?.sduiApplyUrl) locatedSduiApplyUrl = String(locData.sduiApplyUrl)
+            const clickRes = await easyApplyBridgeCommand('CLICK_EASY_APPLY', {}, 'click_apply', 'click_fallback')
+            if (clickRes) {
+              clickResult = clickRes
+              const cData = (clickRes as { data?: unknown }).data as Record<string, unknown> | undefined
+              if (cData?.sduiApplyUrl) locatedSduiApplyUrl = String(cData.sduiApplyUrl)
+            }
+          }
+        } catch { /* best effort */ }
+      }
+
     if (!clickResult?.ok) {
       const check = await checkFormAlreadyOpen()
       if (!check.formOpen) {
         const detail = String(clickResult?.detail || '')
         applyTrace('easy_apply:click_apply_failed', { detail: detail.slice(0, 300), ...check })
-        return { earlyExit: { ok: false, phase: 'click_apply', detail: detail || 'Could not find Easy Apply button.' }, clickResult, sduiApplyUrl: undefined, cdpClickSucceeded }
+        return { earlyExit: { ok: false, phase: 'click_apply', detail: detail || "Easy Apply form didn't open." }, clickResult, sduiApplyUrl: locatedSduiApplyUrl, cdpClickSucceeded }
       }
     }
     // Wait for modal to render

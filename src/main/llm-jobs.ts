@@ -2,12 +2,12 @@
 // llm-jobs.ts — Job search: screening, planning, URL building, batch matching.
 // ---------------------------------------------------------------------------
 
-import { isProfileUsableForJobFit, type UserProfile } from '@core/profile-db'
 import { normalizeJobSearchInput } from '@core/job-search'
-import type { AppSettings } from './settings'
-import { getApiKey } from './settings'
+import { isProfileUsableForJobFit, type UserProfile } from '@core/profile-db'
 import { appLog } from './app-log'
 import { callLlm, classifyLlmError, extractErrorDetail } from './llm-core'
+import type { AppSettings } from './settings'
+import { getApiKey } from './settings'
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -161,7 +161,7 @@ Strict JSON: {"results": [{"index": number, "overall": number, "titleFit": numbe
   const userPayload: Record<string, unknown> = {
     criteria,
     jobs: jobs.map((j, i) => {
-      const entry: Record<string, unknown> = { index: i, title: j.title, company: j.company, location: j.location }
+      const entry: Record<string, unknown> = { index: i, title: j.title || '(unknown title)', company: j.company || '(unknown company)', location: j.location || ''}
       if (j.description && j.description.length > 50) entry.description = j.description.slice(0, 2000)
       return entry
     })
@@ -316,9 +316,9 @@ Include exactly one object per job in the SAME ORDER as input.jobs; copy jobUrl 
     jobs: slice.map((j) => {
       const entry: Record<string, string> = {
         jobUrl: j.jobUrl,
-        title: j.title,
-        company: j.company,
-        location: j.location
+        title: j.title || '(unknown title)',
+        company: j.company || '(unknown company)',
+        location: j.location || ''
       }
       if (j.description && j.description.length > 50) {
         entry.description = j.description.slice(0, 600)
